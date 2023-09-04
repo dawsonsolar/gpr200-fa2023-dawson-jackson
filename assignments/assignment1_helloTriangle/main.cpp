@@ -8,6 +8,30 @@
 const int SCREEN_WIDTH = 1080;
 const int SCREEN_HEIGHT = 720;
 
+//global variable in main.cpp, or in main()
+	float vertices[9] = {
+		//x   //y  //z
+		-0.5, -0.5, 0.0, //Bottom left
+		 0.5, -0.5, 0.0, //Bottom right
+		 0.0,  0.5, 0.0  //Top center
+	};
+
+	const char* vertexShaderSource = R"(
+		#version 450
+		layout(location = 0) in vec3 vPos;
+	void main() {
+		gl_Position = vec4(vPos, 1.0);
+	}
+	)";
+
+	const char* fragmentShaderSource = R"(
+#version 450
+out vec4 FragColor;
+void main(){
+	FragColor = vec4(1.0);
+}
+)";
+
 int main() {
 	printf("Initializing...");
 	if (!glfwInit()) {
@@ -27,16 +51,13 @@ int main() {
 		return 1;
 	}
 
+	
 
-	float vertices[9] = {
-		//x   //y  //z
-		-0.5, -0.5, 0.0, //Bottom left
-		 0.5, -0.5, 0.0, //Bottom right
-		 0.0,  0.5, 0.0  //Top center
-	};
+	
 
 
-	//Define a new buffer id
+
+
 	unsigned int vbo;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -44,7 +65,7 @@ int main() {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	unsigned int vao;
-	glGenVertexArrays(vao);
+	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	//Tell vao to pull vertex data from vbo
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
