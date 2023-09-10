@@ -1,3 +1,5 @@
+// this is getting very frustrating figuring out how to commit.
+
 #include <stdio.h>
 #include <math.h>
 
