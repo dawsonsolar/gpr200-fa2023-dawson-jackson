@@ -9,6 +9,9 @@
 #include <imgui_impl_opengl3.h>
 
 #include <ew/shader.h>
+#include <dj/shader.h>
+#include <dj/texture.cpp>
+
 
 struct Vertex {
 	float x, y, z;
@@ -59,6 +62,20 @@ int main() {
 	ImGui_ImplOpenGL3_Init();
 
 	ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
+
+	// Load Textures
+	unsigned int brickTexture = loadTexture("assets/brickwall.png", GL_REPEAT, GL_LINEAR);
+	unsigned int noiseTexture = loadTexture("assets/noise.png", GL_REPEAT, GL_LINEAR);
+
+	// Place brickTexture in unit 0
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, brickTexture);
+
+	// Place noiseTexture in unit 1
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+
+
 
 	unsigned int quadVAO = createVAO(vertices, 4, indices, 6);
 
