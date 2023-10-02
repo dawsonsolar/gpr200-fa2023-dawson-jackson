@@ -1,3 +1,5 @@
+//Debugging help from Sierra Blume and Ben Emag.
+
 #include <stdio.h>
 #include <math.h>
 
@@ -55,6 +57,9 @@ int main() {
 		return 1;
 	}
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	//Initialize ImGUI
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -62,36 +67,79 @@ int main() {
 	ImGui_ImplOpenGL3_Init();
 
 	ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
+	ew::Shader backgroundShader("assets/background.vert", "assets/background.frag");
+	ew::Shader characterShader("assets/character.vert", "assets/character.frag");
 
 	// Load Textures
-	unsigned int brickTexture = loadTexture("assets/brickwall.png", GL_REPEAT, GL_LINEAR);
-	unsigned int noiseTexture = loadTexture("assets/noise.png", GL_REPEAT, GL_LINEAR);
+	unsigned int brickTexture = loadTexture("assets/brickwall.png", 2, 2);
+	unsigned int noiseTexture = loadTexture("assets/noise.png", 1, 1);
+	unsigned int characterTexture = loadTexture("assets/The_Kid.png", 1, 0);
 
-	// Place brickTexture in unit 0
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, brickTexture);
+	// Parameters for textures used in .frag and vert
+	int imageSizeWidth = 128;
+	int imageSizeHeight = 128;
+	float speed = 0.5;
+	float alphaRate = 0.5;
+	float noiseRate = 5.0;
+	float scrollSpeed = -0.5;
+	
 
-	// Place noiseTexture in unit 1
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	
 
+
+	// Put background textures into shader
+	backgroundShader.use();
+	backgroundShader.setInt("_BrickTexture", 0);
+	backgroundShader.setInt("_NoiseTexture", 1);
+
+	// Same with character shader
+	characterShader.use();
+	characterShader.setInt("characterTexture", 2);
 
 
 	unsigned int quadVAO = createVAO(vertices, 4, indices, 6);
-
 	glBindVertexArray(quadVAO);
 
-	while (!glfwWindowShouldClose(window)) {
+	while (!glfwWindowShouldClose(window))
+	{
 		glfwPollEvents();
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		//Set uniforms
-		shader.use();
+		float setTime = (float)glfwGetTime();
 
+		// Draw the background 
+		backgroundShader.use();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, brickTexture);
+		backgroundShader.setInt("_BrickTexture", 0);
+
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, noiseTexture);
+		backgroundShader.setInt("noiseTexture", 1);
+
+		backgroundShader.setFloat("noiseRate", noiseRate);
+		backgroundShader.setFloat("time", glfwGetTime());
+		backgroundShader.setFloat("scrollSpeed", scrollSpeed);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
 
-		//Render UI
+
+		// Draw the Character
+		characterShader.use();
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, characterTexture);
+		characterShader.setInt("characterTexture", 5);
+		characterShader.setFloat("time", glfwGetTime());
+		characterShader.setVec2("imgSize", imageSizeWidth, imageSizeHeight);
+		characterShader.setVec2("aspectRatio", SCREEN_WIDTH, SCREEN_HEIGHT);
+		characterShader.setFloat("speed", speed);
+		characterShader.setFloat("alphaRate", alphaRate);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
+
+
+
+		//Render UI, im not adding to this.
 		{
 			ImGui_ImplGlfw_NewFrame();
 			ImGui_ImplOpenGL3_NewFrame();
