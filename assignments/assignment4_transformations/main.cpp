@@ -1,3 +1,8 @@
+// Dawson Jackson
+//
+// 
+// Debugging help from Sierra Blume.
+
 #include <stdio.h>
 #include <math.h>
 
@@ -12,28 +17,34 @@
 #include <ew/ewMath/vec3.h>
 #include <ew/procGen.h>
 
+#include <dj/transformations.h>
+
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 //Square aspect ratio for now. We will account for this with projection later.
 const int SCREEN_WIDTH = 720;
 const int SCREEN_HEIGHT = 720;
 
-int main() {
+int main() 
+{
 	printf("Initializing...");
-	if (!glfwInit()) {
+	if (!glfwInit())
+	{
 		printf("GLFW failed to init!");
 		return 1;
 	}
 
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Textures", NULL, NULL);
-	if (window == NULL) {
+	if (window == NULL)
+	{
 		printf("GLFW failed to create window");
 		return 1;
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
-	if (!gladLoadGL(glfwGetProcAddress)) {
+	if (!gladLoadGL(glfwGetProcAddress)) 
+	{
 		printf("GLAD Failed to load GL headers");
 		return 1;
 	}
@@ -52,10 +63,19 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 
 	ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
-	
+
+	//Creating 4 cubes and setting position
+	int const NUM_CUBES = 4;
+	dj::Transform transforms[NUM_CUBES];
+
+	transforms[0].position = ew::Vec3(-0.5, 0.5, 0.0);
+	transforms[1].position = ew::Vec3(0.5, 0.5, 0.0);
+	transforms[2].position = ew::Vec3(-0.5, -0.5, 0.0);
+	transforms[3].position = ew::Vec3(0.5, -0.5, 0.0);
+
 	//Cube mesh
 	ew::Mesh cubeMesh(ew::createCube(0.5f));
-	
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
@@ -65,17 +85,32 @@ int main() {
 		//Set uniforms
 		shader.use();
 
-		//TODO: Set model matrix uniform
-
-		cubeMesh.draw();
+		for (int i = 0; i < NUM_CUBES; i++)
+		{
+			shader.setMat4("_Model", transforms[i].getModelMatrix());
+			cubeMesh.draw();
+		}
 
 		//Render UI
 		{
 			ImGui_ImplGlfw_NewFrame();
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui::NewFrame();
-
 			ImGui::Begin("Transform");
+
+			for (int i = 0; i < NUM_CUBES; i++)
+			{
+				ImGui::PushID(i);
+				if (ImGui::CollapsingHeader("Transformations"))
+				{
+					ImGui::DragFloat3("Position", &transforms[i].position.x, 0.05f);
+					ImGui::DragFloat3("Rotation", &transforms[i].rotation.x, 1.0f);
+					ImGui::DragFloat3("Scale", &transforms[i].scale.x, 0.05f);
+				}
+				ImGui::PopID();
+			}
+
+			
 			ImGui::End();
 
 			ImGui::Render();
@@ -91,4 +126,3 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
-
