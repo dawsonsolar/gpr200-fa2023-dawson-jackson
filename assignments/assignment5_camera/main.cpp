@@ -1,3 +1,4 @@
+// Debugging help from Sierra Blume
 #include <stdio.h>
 #include <math.h>
 
@@ -11,6 +12,7 @@
 #include <ew/shader.h>
 #include <ew/procGen.h>
 #include <ew/transform.h>
+#include <dj/camera.h>
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -20,6 +22,7 @@ const int SCREEN_HEIGHT = 720;
 
 const int NUM_CUBES = 4;
 ew::Transform cubeTransforms[NUM_CUBES];
+dj::Camera camera;
 
 int main() {
 	printf("Initializing...");
@@ -66,6 +69,17 @@ int main() {
 		cubeTransforms[i].position.y = i / (NUM_CUBES / 2) - 0.5;
 	}
 
+	// Default values
+	camera.position = ew::Vec3(0, 0, 5);
+	camera.target = ew::Vec3(0, 0, 0);
+	camera.aspectRatio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
+	camera.fov = 60;
+	camera.orthoSize = 6;
+	camera.nearPlane = 0.1;
+	camera.farPlane = 100;
+	bool orbit = false;
+	float orbitSpeed = 1.0;
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
@@ -74,6 +88,8 @@ int main() {
 
 		//Set uniforms
 		shader.use();
+		shader.setMat4("_View", camera.ViewMatrix());
+		shader.setMat4("_Projection", camera.ProjectionMatrix());
 
 		//TODO: Set model matrix uniform
 		for (size_t i = 0; i < NUM_CUBES; i++)
@@ -90,7 +106,45 @@ int main() {
 			ImGui::NewFrame();
 
 			ImGui::Begin("Settings");
-			ImGui::Text("Cubes");
+			ImGui::Text("Camera");
+			ImGui::Checkbox("Orbit", &orbit);
+
+			if (orbit)
+			{
+				ImGui::DragFloat("Orbit Speed:", &orbitSpeed, 0.05f);
+				camera.position.x = cosf((float)glfwGetTime() * orbitSpeed) * 5.0;
+				camera.position.z = sinf((float)glfwGetTime() * orbitSpeed) * 5.0;
+			}
+
+			ImGui::DragFloat3("Position:", &camera.position.x, 0.5f);
+			ImGui::DragFloat3("Target:", &camera.target.x, 0.5f);
+			ImGui::Checkbox("Orthographic", &camera.orthographic);
+
+			if (camera.orthographic == true)
+			{
+				ImGui::DragFloat("Orthographic Height:", &camera.orthoSize, 0.05f);
+			}
+			else
+			{
+				ImGui::SliderFloat("Field Of View:", &camera.fov, 0.0, 180.0);
+			}
+
+			ImGui::DragFloat("Near Plane:", &camera.nearPlane, 0.05f, 0.001);
+			ImGui::DragFloat("Far Plane:", &camera.farPlane, 0.05f, 0.001);
+
+			// Reset Button
+			if (ImGui::Button("Reset"))
+			{
+				camera.position = ew::Vec3(0, 0, 5);
+					camera.target = ew::Vec3(0, 0, 0);
+					camera.aspectRatio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
+					camera.fov = 60;
+					camera.orthoSize = 6;
+					camera.nearPlane = 0.1;
+					camera.farPlane = 100;
+					bool orbit = false;
+					orbitSpeed = 1.0;
+			}
 			for (size_t i = 0; i < NUM_CUBES; i++)
 			{
 				ImGui::PushID(i);
@@ -116,5 +170,6 @@ int main() {
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
+	camera.aspectRatio = (float)(width) / (float)(height);
 }
 

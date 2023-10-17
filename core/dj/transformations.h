@@ -70,7 +70,63 @@ namespace dj
 		ew::Vec3 scale = ew::Vec3(1.0f, 1.0f, 1.0f);
 		ew::Mat4 getModelMatrix() const 
 		{	
-			return Translate(position) * RotateY(ew::Radians(rotation.y)) * RotateX(ew::Radians(rotation.x)) * RotateZ(ew::Radians(rotation.z)) * Scale(scale);
+			// Changed since its required to work
+			return ew::Mat4(dj::Translate(position) * dj::RotateY(ew::Radians(rotation.y)) * dj::RotateX(ew::Radians(rotation.x)) * dj::RotateZ(ew::Radians(rotation.z)) * dj::Scale(scale));
 		}
+	};
+	inline ew::Mat4 LookAt(ew::Vec3 eye, ew::Vec3 target, ew::Vec3 worldUp)
+	{
+		ew::Vec3 forward = eye - target;
+		forward = ew::Normalize(forward);
+
+		//use ew::Cross for cross product!
+		ew::Vec3 right = ew::Cross(worldUp, forward);
+		right = ew::Normalize(right);
+		ew::Vec3 up = Cross(forward, right);
+		up = Normalize(up);
+
+		ew::Mat4 viewMat = 
+		{
+			right.x,   right.y,   right.z,   -ew::Dot(right, eye),
+			up.x,      up.y,      up.z,      -ew::Dot(up, eye),
+			forward.x, forward.y, forward.z, -ew::Dot(forward, eye),
+			0.0,       0.0,       0.0,       1.0
+		};
+
+		return viewMat;
+	};
+
+	//Orthographic projection
+	inline ew::Mat4 Orthographic(float height, float aspect, float near, float far)
+	{
+		float width = height * aspect;
+		float right = width / 2;
+		float left = -(right);
+		float top = height / 2;
+		float bottom = -(top);
+
+		ew::Mat4 orthographicProj = 
+		{
+		2 / (right - left), 0.0,                0.0,                 -((right + left) / (right - left)),
+		0.0,                2 / (top - bottom), 0.0,                 -((top + bottom) / (top - bottom)),
+		0.0,                0.0,                -(2 / (far - near)), -((far + near) / (far - near)),
+		0.0,                0.0,                0.0,                 1.0 
+		};
+
+		return orthographicProj;
+	};
+
+	//Perspective projection
+	//fov = vertical aspect ratio (radians)
+	inline ew::Mat4 Perspective(float fov, float aspect, float near, float far)
+	{
+		// This probably doesn't look great but I tried
+		ew::Mat4 perspectiveProj = {
+		1 / (tanf(ew::Radians(fov) / 2) * aspect),       0.0,                        0.0,                               0.0,
+		0.0,                                 1 / (tanf(ew::Radians(fov) / 2)),       0.0,                               0.0,
+		0.0,                                             0.0,           ((near + far) / (near - far)),  (2 * far * near) / (near - far),
+		0.0,                                             0.0,                       -1.0,                               0.0 };
+
+		return perspectiveProj;
 	};
 }
