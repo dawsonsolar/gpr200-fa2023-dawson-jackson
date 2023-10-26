@@ -154,7 +154,7 @@ int main() {
 			ImGui::DragFloat("Near Plane:", &camera.nearPlane, 0.05f, 0.001);
 			ImGui::DragFloat("Far Plane:", &camera.farPlane, 0.05f, 0.001);
 
-			ImGui::Text("Camera Controller");
+			
 			
 			// Reset Button
 			if (ImGui::Button("Reset"))
